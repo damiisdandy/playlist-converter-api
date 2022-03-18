@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 fastapi = {extras = ["all"], version = "*"}
 ytmusicapi = "*"
+spotipy = "*"
 
 [dev-packages]
 autopep8 = "*"
