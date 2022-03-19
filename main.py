@@ -12,7 +12,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 origins = [
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "https://playlist-converter.vercel.app",
+    'https://playlist-converter.damiisdandy.com'
 ]
 
 # setup Spotify client
