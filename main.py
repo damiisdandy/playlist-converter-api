@@ -14,7 +14,7 @@ load_dotenv()
 origins = [
     "http://localhost:3000",
     "https://playlist-converter.vercel.app",
-    'https://playlist-converter.damiisdandy.com'
+    'https://hoodini.damiisdandy.com'
 ]
 
 # setup Spotify client
