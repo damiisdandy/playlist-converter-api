@@ -4,6 +4,7 @@ from typing import List
 
 class Track(BaseModel):
     title: str
+    url: str
     artists: str
     duration: str
     thumbnail: str

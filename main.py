@@ -4,11 +4,16 @@ from ytmusicapi import YTMusic
 import spotipy as sp
 from spotipy.oauth2 import SpotifyClientCredentials
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 
 
 load_dotenv()
+
+origins = [
+    "http://localhost:3000"
+]
 
 # setup Spotify client
 spotify_auth_manager = SpotifyClientCredentials(
@@ -20,6 +25,14 @@ ytmusic = YTMusic()
 
 # FASTApi app
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.post("/get-playlist", response_model=Playlist)
@@ -42,6 +55,7 @@ async def get_playlist(data: GetPlaylist):
                         artists += artist.get("name")
                 tracks.append({
                     "title": track.get("title"),
+                    "url": "https://music.youtube.com/watch?v=" + track.get("videoId"),
                     "artists": artists,
                     "duration": track.get("duration"),
                     "thumbnail": track.get("thumbnails")[0].get("url"),
@@ -68,6 +82,8 @@ async def get_playlist(data: GetPlaylist):
             gotten_playlist = spotify.playlist(playlist_data.playlist_id)
             tracks = []
             total_duration = 0
+            print(gotten_playlist.get("tracks").get(
+                "items")[0].get("track").get("href"))
             for tr in gotten_playlist.get("tracks").get("items"):
                 track = tr.get("track")
                 artists = ""
@@ -79,6 +95,7 @@ async def get_playlist(data: GetPlaylist):
                         artists += artist.get("name")
                 tracks.append({
                     "title": track.get("name"),
+                    "url": "https://open.spotify.com/track/" + track.get("href").split("/")[-1],
                     "artists": artists,
                     "duration": get_track_duration(track.get("duration_ms")),
                     "thumbnail": track.get("album").get("images")[0].get("url"),
