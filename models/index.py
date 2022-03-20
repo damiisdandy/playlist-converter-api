@@ -1,8 +1,9 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 
 class Track(BaseModel):
+    id: str
     title: str
     url: str
     artists: str
@@ -23,7 +24,15 @@ class Playlist(BaseModel):
     duration: str
     trackCount: int
     tracks: List[Track]
+    platform: str
+    similarity: Optional[float] = 0.0
 
 
 class GetPlaylist(BaseModel):
     url: str
+
+
+class GeneratePlaylist(BaseModel):
+    thumbnail: str
+    platform: str
+    queries: List[str]

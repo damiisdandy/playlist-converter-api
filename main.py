@@ -1,5 +1,5 @@
-from utils.index import get_playlist_duration, get_playlist_source, get_track_duration
-from models.index import GetPlaylist, Playlist
+from utils.index import generate_random_string, get_playlist_duration, get_playlist_source, get_spotify_track_data, get_track_duration, get_youtube_track_data, playlist_similarity, track_duration_ms
+from models.index import GeneratePlaylist, GetPlaylist, Playlist
 from ytmusicapi import YTMusic
 import spotipy as sp
 from spotipy.oauth2 import SpotifyClientCredentials
@@ -7,15 +7,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 
 load_dotenv()
 
-origins = [
-    "http://localhost:3000",
-    "https://playlist-converter.vercel.app",
-    'https://hoodini.damiisdandy.com'
-]
+origins = os.getenv("CORS_ORIGINS").split(",")
 
 # setup Spotify client
 spotify_auth_manager = SpotifyClientCredentials(
@@ -49,22 +46,7 @@ async def get_playlist(data: GetPlaylist):
                 playlist_data.playlist_id)
             tracks = []
             for track in gotten_playlist.get("tracks"):
-                artists = ""
-                for artist in track.get("artists"):
-                    if track.get("artists")[-1].get("name") != artist.get("name"):
-                        artists += (artist.get("name") + ", ")
-                    else:
-                        artists += artist.get("name")
-                tracks.append({
-                    "title": track.get("title"),
-                    "url": "https://music.youtube.com/watch?v=" + track.get("videoId"),
-                    "artists": artists,
-                    "duration": track.get("duration"),
-                    "thumbnail": track.get("thumbnails")[0].get("url"),
-                    "album": track.get("album").get("name") if track.get("album") is not None else "",
-                    "isExplicit": track.get("isExplicit"),
-                    "searchKey": track.get("title") + " " + track.get("album").get("name") if track.get("album") is not None else ""
-                })
+                tracks.append(get_youtube_track_data(track))
             playlist = {
                 "id": gotten_playlist.get('id'),
                 "title":  gotten_playlist.get('title'),
@@ -74,7 +56,8 @@ async def get_playlist(data: GetPlaylist):
                 "year":  gotten_playlist.get('year'),
                 "duration":  gotten_playlist.get('duration'),
                 "trackCount":  gotten_playlist.get('trackCount'),
-                "tracks": tracks
+                "tracks": tracks,
+                "platform": "YOUTUBE",
             }
         except Exception as e:
             raise HTTPException(
@@ -84,27 +67,10 @@ async def get_playlist(data: GetPlaylist):
             gotten_playlist = spotify.playlist(playlist_data.playlist_id)
             tracks = []
             total_duration = 0
-            print(gotten_playlist.get("tracks").get(
-                "items")[0].get("track").get("href"))
             for tr in gotten_playlist.get("tracks").get("items"):
                 track = tr.get("track")
-                artists = ""
                 total_duration += track.get("duration_ms")
-                for artist in track.get("artists"):
-                    if track.get("artists")[-1].get("name") != artist.get("name"):
-                        artists += (artist.get("name") + ", ")
-                    else:
-                        artists += artist.get("name")
-                tracks.append({
-                    "title": track.get("name"),
-                    "url": "https://open.spotify.com/track/" + track.get("href").split("/")[-1],
-                    "artists": artists,
-                    "duration": get_track_duration(track.get("duration_ms")),
-                    "thumbnail": track.get("album").get("images")[0].get("url"),
-                    "album": track.get("album").get("name"),
-                    "isExplicit": track.get("explicit"),
-                    "searchKey": track.get("name") + " " + track.get("album").get("name")
-                })
+                tracks.append(get_spotify_track_data(track))
                 pass
 
             playlist = {
@@ -116,11 +82,50 @@ async def get_playlist(data: GetPlaylist):
                 "year":  "-",
                 "duration":  get_playlist_duration(total_duration),
                 "trackCount":  len(gotten_playlist.get("tracks").get("items")),
-                "tracks": tracks
+                "tracks": tracks,
+                "platform": "SPOTIFY"
             }
         except Exception as e:
             raise HTTPException(
                 status_code=400, detail=f"problem getting playlist - {e}")
-    elif playlist_data.source == 'APPLE':
-        pass
+    return playlist
+
+
+@app.post("/generate-playlist", response_model=Playlist)
+async def generate_playlist(data: GeneratePlaylist):
+    playlist = {}
+    tracks = []
+    total_duration = 0
+    if data.platform == 'SPOTIFY':
+        for query in data.queries:
+            search_result = spotify.search(query)
+            related_tracks = search_result.get("tracks").get("items")
+            if len(related_tracks) > 0:
+                track = get_spotify_track_data(
+                    search_result.get("tracks").get("items")[0])
+                total_duration += track_duration_ms(track.get("duration"))
+                tracks.append(track)
+    elif data.platform == 'YOUTUBE':
+        for query in data.queries:
+            search_result = ytmusic.search(query, "songs", limit=1)
+            if len(search_result) > 0:
+                track = get_youtube_track_data(search_result[0])
+                total_duration += track_duration_ms(track.get("duration"))
+                tracks.append(track)
+    else:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid data source")
+    playlist = {
+        "id": generate_random_string(10),
+        "title":  "NEW PLAYLIST",
+        "description":  "Playlist generated by Hoodini(damiisdandy)",
+        "thumbnail": data.thumbnail,
+        "author":  "You",
+        "year": str(datetime.now().date().strftime("%Y")),
+        "duration":  get_playlist_duration(total_duration),
+        "trackCount":  len(tracks),
+        "tracks": tracks,
+        "similarity": playlist_similarity(data.queries, tracks),
+        "platform": "YOUTUBE",
+    }
     return playlist

@@ -1,3 +1,8 @@
+import random
+import string
+from difflib import SequenceMatcher
+from typing import List
+
 
 class PlaylistSource:
     source: str
@@ -50,3 +55,67 @@ def get_track_duration(duration: int) -> str:
         else:
             return str(num)
     return f"{minutes}:{to_tens(seconds)}"
+
+
+def track_duration_ms(duration: str) -> int:
+    """
+    Convert format 2:32 to milliseconds
+    """
+    minutes = int(duration.split(":")[0])
+    seconds = int(duration.split(":")[1])
+    return (minutes * 60000) + (seconds * 1000)
+
+
+def get_spotify_track_data(track: dict) -> dict:
+    artists = ""
+    for artist in track.get("artists"):
+        if track.get("artists")[-1].get("name") != artist.get("name"):
+            artists += (artist.get("name") + ", ")
+        else:
+            artists += artist.get("name")
+    return {
+        "id": track.get("href").split("/")[-1],
+        "title": track.get("name"),
+        "url": "https://open.spotify.com/track/" + track.get("href").split("/")[-1],
+        "artists": artists,
+        "duration": get_track_duration(track.get("duration_ms")),
+        "thumbnail": track.get("album").get("images")[0].get("url"),
+        "album": track.get("album").get("name"),
+        "isExplicit": track.get("explicit"),
+        "searchKey": track.get("name")
+    }
+
+
+def get_youtube_track_data(track: dict) -> dict:
+    artists = ""
+    for artist in track.get("artists"):
+        if track.get("artists")[-1].get("name") != artist.get("name"):
+            artists += (artist.get("name") + ", ")
+        else:
+            artists += artist.get("name")
+    return {
+        "id": track.get("videoId"),
+        "title": track.get("title"),
+        "url": "https://music.youtube.com/watch?v=" + track.get("videoId"),
+        "artists": artists,
+        "duration": track.get("duration"),
+        "thumbnail": track.get("thumbnails")[0].get("url"),
+        "album": track.get("album").get("name") if track.get("album") is not None else "",
+        "isExplicit": track.get("isExplicit"),
+        "searchKey": track.get("title")
+    }
+
+
+def generate_random_string(length: int) -> str:
+    return ''.join((random.choice(string.ascii_lowercase)
+                    for x in range(length)))
+
+
+def playlist_similarity(tracks1: List[str], tracks2: List[dict]) -> float:
+    string1 = ""
+    string2 = ""
+    for word in tracks1:
+        string1 += word
+    for track in tracks2:
+        string2 += track.get("title")
+    return int(SequenceMatcher(None, string1, string2).ratio() * 100)
