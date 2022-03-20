@@ -12,6 +12,7 @@ class Track(BaseModel):
     album: str
     isExplicit: bool
     searchKey: str
+    platform: Optional[str]
 
 
 class Playlist(BaseModel):
@@ -35,4 +36,4 @@ class GetPlaylist(BaseModel):
 class GeneratePlaylist(BaseModel):
     thumbnail: str
     platform: str
-    queries: List[str]
+    tracks: List[Track]

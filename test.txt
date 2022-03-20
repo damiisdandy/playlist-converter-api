@@ -1,2 +1,2 @@
 YOUTUBE_TEST_URL=https://music.youtube.com/playlist?list=PLDInZaOOyBblfcPmlPBzfKH-tyDwUWOYJ
-SPOTIFY_TEST_URL=https://open.spotify.com/playlist/2V3yMxk0NC66iA3p2aM38R
+SPOTIFY_TEST_URL=https://open.spotify.com/playlist/2V3yMxk0NC66iA3p2aM38R 

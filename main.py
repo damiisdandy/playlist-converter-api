@@ -1,4 +1,4 @@
-from utils.index import generate_random_string, get_playlist_duration, get_playlist_source, get_spotify_track_data, get_track_duration, get_youtube_track_data, playlist_similarity, track_duration_ms
+from utils.index import generate_random_string, get_playlist_duration, get_playlist_source, get_spotify_track_data,  get_youtube_track_data,  track_duration_ms
 from models.index import GeneratePlaylist, GetPlaylist, Playlist
 from ytmusicapi import YTMusic
 import spotipy as sp
@@ -97,7 +97,9 @@ async def generate_playlist(data: GeneratePlaylist):
     tracks = []
     total_duration = 0
     if data.platform == 'SPOTIFY':
-        for query in data.queries:
+        for q_track in data.tracks:
+            artist = q_track.artists.split(",")[0].strip()
+            query = f"artist:{artist} {q_track.title}"
             search_result = spotify.search(query)
             related_tracks = search_result.get("tracks").get("items")
             if len(related_tracks) > 0:
@@ -106,7 +108,9 @@ async def generate_playlist(data: GeneratePlaylist):
                 total_duration += track_duration_ms(track.get("duration"))
                 tracks.append(track)
     elif data.platform == 'YOUTUBE':
-        for query in data.queries:
+        for q_track in data.tracks:
+            artist = q_track.artists.split(",")[0].strip()
+            query = q_track.title + " " + artist
             search_result = ytmusic.search(query, "songs", limit=1)
             if len(search_result) > 0:
                 track = get_youtube_track_data(search_result[0])
@@ -125,7 +129,7 @@ async def generate_playlist(data: GeneratePlaylist):
         "duration":  get_playlist_duration(total_duration),
         "trackCount":  len(tracks),
         "tracks": tracks,
-        "similarity": playlist_similarity(data.queries, tracks),
+        "similarity": 0,
         "platform": data.platform,
     }
     return playlist

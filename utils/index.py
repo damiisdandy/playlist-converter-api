@@ -2,6 +2,9 @@ import random
 import string
 from difflib import SequenceMatcher
 from typing import List
+from operator import attrgetter
+
+from models.index import Track
 
 
 class PlaylistSource:
@@ -15,11 +18,9 @@ class PlaylistSource:
 
 def get_playlist_source(url: str) -> PlaylistSource:
     if url.startswith('https://music.youtube.com'):
-        return PlaylistSource('YOUTUBE', url.split("=")[-1])
+        return PlaylistSource('YOUTUBE', url.split("=")[-1].strip())
     elif url.startswith('https://open.spotify.com'):
-        return PlaylistSource('SPOTIFY', url.split('/')[-1])
-    elif url.startswith('https://'):
-        return PlaylistSource('APPLE', url.split('/')[-1])
+        return PlaylistSource('SPOTIFY', url.split('/')[-1].strip())
     else:
         return None
 
@@ -82,7 +83,9 @@ def get_spotify_track_data(track: dict) -> dict:
         "thumbnail": track.get("album").get("images")[0].get("url"),
         "album": track.get("album").get("name"),
         "isExplicit": track.get("explicit"),
-        "searchKey": track.get("name")
+        "searchKey": track.get("name"),
+        "platform": "SPOTIFY",
+
     }
 
 
@@ -102,20 +105,11 @@ def get_youtube_track_data(track: dict) -> dict:
         "thumbnail": track.get("thumbnails")[0].get("url"),
         "album": track.get("album").get("name") if track.get("album") is not None else "",
         "isExplicit": track.get("isExplicit"),
-        "searchKey": track.get("title")
+        "searchKey": track.get("title"),
+        "platform": "YOUTUBE",
     }
 
 
 def generate_random_string(length: int) -> str:
     return ''.join((random.choice(string.ascii_lowercase)
                     for x in range(length)))
-
-
-def playlist_similarity(tracks1: List[str], tracks2: List[dict]) -> float:
-    string1 = ""
-    string2 = ""
-    for word in tracks1:
-        string1 += word
-    for track in tracks2:
-        string2 += track.get("title")
-    return int(SequenceMatcher(None, string1, string2).ratio() * 100)
