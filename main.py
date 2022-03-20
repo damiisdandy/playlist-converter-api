@@ -126,6 +126,6 @@ async def generate_playlist(data: GeneratePlaylist):
         "trackCount":  len(tracks),
         "tracks": tracks,
         "similarity": playlist_similarity(data.queries, tracks),
-        "platform": "YOUTUBE",
+        "platform": data.platform,
     }
     return playlist
