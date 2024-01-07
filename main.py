@@ -1,4 +1,6 @@
-from utils.index import generate_random_string, get_playlist_duration, get_playlist_source, parse_spotify_track_data,  get_youtube_track_data,  track_duration_ms
+from utils.index import generate_random_string, get_playlist_duration, get_youtube_track_data,  track_duration_ms
+from utils.url_parser import get_playlist_source
+from utils.parse_track_object import parse_spotify_track_data
 from models.index import GeneratePlaylist, GetPlaylist, Playlist, PlaylistSource
 from ytmusicapi import YTMusic
 import spotipy as sp
@@ -12,7 +14,10 @@ from datetime import datetime
 
 load_dotenv()
 
-origins = os.getenv("CORS_ORIGINS").split(",")
+# CORS
+cors_origins_str = os.getenv("CORS_ORIGINS")
+origins = cors_origins_str.split() if cors_origins_str else []
+
 
 # setup Spotify client
 spotify_auth_manager = SpotifyClientCredentials(
@@ -50,17 +55,22 @@ async def get_playlist(data: GetPlaylist):
 
     match playlist_info.source:
         case PlaylistSource.SPOTIFY:
-            print(playlist_info.playlist_id)
             spotify_playlist = spotify.playlist(
                 playlist_id=playlist_info.playlist_id)
-            tracks = []
-            track_count = 0
-            total_duration = 0
-            for tr in spotify_playlist.get("tracks").get("items"):
-                track = tr.get("track")
-                total_duration += track.get("duration_ms")
-                tracks.append(parse_spotify_track_data(track))
-                track_count += 1
+            if spotify_playlist is None:
+                raise HTTPException(
+                    status_code=400, detail="spotify playlist does not exist")
+
+            playlist_duration = 0
+            tracks = spotify_playlist.get("tracks").get("items")
+            parsed_tracks = []
+            duration = 0
+
+            for track in tracks:
+                song = track.get("track")
+                if song is not None:
+                    duration += song.get("duration_ms", 0)
+                    # parsed_tracks.append(parse_spotify_track_data(track))
 
             return {
                 "id": spotify_playlist.get('id'),
@@ -68,10 +78,10 @@ async def get_playlist(data: GetPlaylist):
                 "description":  spotify_playlist.get('description'),
                 "thumbnail": spotify_playlist.get('images')[0].get("url"),
                 "author":  spotify_playlist.get('owner').get("display_name"),
-                "year":  0,
-                "duration":  get_playlist_duration(total_duration),
-                "trackCount": track_count,
-                "tracks": tracks,
+                "duration_ms":  playlist_duration,
+                "duration": duration,
+                "trackCount": spotify_playlist.get("tracks").get("total"),
+                "tracks": parsed_tracks,
                 "platform": PlaylistSource.SPOTIFY,
                 "similarity": 0,
             }

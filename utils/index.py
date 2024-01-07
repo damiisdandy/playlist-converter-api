@@ -1,21 +1,5 @@
 import random
 import string
-from typing import Optional
-from models.index import PlaylistInitInfo, PlaylistSource
-from urllib.parse import urlparse
-
-
-def get_playlist_source(url: str) -> Optional[PlaylistInitInfo]:
-    domain = urlparse(url).netloc
-    print(urlparse.query)
-    if domain == 'music.youtube.com':
-        playlist_id = url.split("=")[-1].strip()
-        return PlaylistInitInfo(PlaylistSource.YOUTUBE, playlist_id=playlist_id)
-    elif domain == 'open.spotify.com':
-        playlist_id = url.split('/')[-1].strip()
-        return PlaylistInitInfo(PlaylistSource.SPOTIFY, playlist_id=playlist_id)
-    else:
-        return None
 
 
 def get_playlist_duration(duration: int) -> str:

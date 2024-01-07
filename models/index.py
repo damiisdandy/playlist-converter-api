@@ -22,7 +22,7 @@ class Track(BaseModel):
     title: str
     url: str
     artists: str
-    duration: str
+    duration: int
     thumbnail: str
     album: str
     isExplicit: bool
@@ -36,12 +36,11 @@ class Playlist(BaseModel):
     description: str
     thumbnail: str
     author: str
-    year: int
-    duration: str
+    duration: int
     trackCount: int
     tracks: List[Track]
     platform: PlaylistSource
-    similarity: Optional[float] = 0.0
+    similarity: Optional[float]
 
 
 class GetPlaylist(BaseModel):
