@@ -1,7 +1,8 @@
+from typing import List
 from utils.index import generate_random_string, get_playlist_duration, get_youtube_track_data,  track_duration_ms
 from utils.url_parser import get_playlist_source
-from utils.parse_track_object import parse_spotify_track_data
-from models.index import GeneratePlaylist, GetPlaylist, Playlist, PlaylistSource
+from utils.parse_track import parse_spotify_track_data
+from models.index import GeneratePlaylist, GetPlaylist, Playlist, PlaylistSource, Track
 from ytmusicapi import YTMusic
 import spotipy as sp
 from spotipy.oauth2 import SpotifyClientCredentials
@@ -47,7 +48,7 @@ async def index():
 
 
 @app.post("/get-playlist", response_model=Playlist)
-async def get_playlist(data: GetPlaylist):
+async def get_playlist(data: GetPlaylist) -> Playlist:
     playlist = {}
     playlist_info = get_playlist_source(data.url)
     if playlist_info is None:
@@ -60,31 +61,29 @@ async def get_playlist(data: GetPlaylist):
             if spotify_playlist is None:
                 raise HTTPException(
                     status_code=400, detail="spotify playlist does not exist")
-
-            playlist_duration = 0
             tracks = spotify_playlist.get("tracks").get("items")
-            parsed_tracks = []
+            parsed_tracks: List[Track] = []
             duration = 0
 
             for track in tracks:
                 song = track.get("track")
                 if song is not None:
-                    duration += song.get("duration_ms", 0)
-                    # parsed_tracks.append(parse_spotify_track_data(track))
+                    parsed_song = parse_spotify_track_data(song)
+                    duration += parsed_song.duration
+                    parsed_tracks.append(parsed_song)
 
-            return {
-                "id": spotify_playlist.get('id'),
-                "title":  spotify_playlist.get('name'),
-                "description":  spotify_playlist.get('description'),
-                "thumbnail": spotify_playlist.get('images')[0].get("url"),
-                "author":  spotify_playlist.get('owner').get("display_name"),
-                "duration_ms":  playlist_duration,
-                "duration": duration,
-                "trackCount": spotify_playlist.get("tracks").get("total"),
-                "tracks": parsed_tracks,
-                "platform": PlaylistSource.SPOTIFY,
-                "similarity": 0,
-            }
+            return Playlist(
+                id=spotify_playlist.get('id'),
+                title=spotify_playlist.get('name'),
+                description=spotify_playlist.get('description'),
+                thumbnail=spotify_playlist.get('images')[0].get("url"),
+                author=spotify_playlist.get('owner').get("display_name"),
+                duration=duration,
+                track_count=spotify_playlist.get("tracks").get("total"),
+                tracks=parsed_tracks,
+                platform=PlaylistSource.SPOTIFY,
+                similarity=0,
+            )
 
     # if playlist_data.source == 'YOUTUBE':
     #     try:

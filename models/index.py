@@ -25,8 +25,8 @@ class Track(BaseModel):
     duration: int
     thumbnail: str
     album: str
-    isExplicit: bool
-    searchKey: str
+    is_explicit: bool
+    search_key: str
     platform: PlaylistSource
 
 
@@ -37,7 +37,7 @@ class Playlist(BaseModel):
     thumbnail: str
     author: str
     duration: int
-    trackCount: int
+    track_count: int
     tracks: List[Track]
     platform: PlaylistSource
     similarity: Optional[float]
