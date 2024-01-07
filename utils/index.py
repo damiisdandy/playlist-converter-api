@@ -44,27 +44,6 @@ def track_duration_ms(duration: str) -> int:
     return (minutes * 60000) + (seconds * 1000)
 
 
-def get_youtube_track_data(track: dict) -> dict:
-    artists = ""
-    for artist in track.get("artists"):
-        if track.get("artists")[-1].get("name") != artist.get("name"):
-            artists += (artist.get("name") + ", ")
-        else:
-            artists += artist.get("name")
-    return {
-        "id": track.get("videoId"),
-        "title": track.get("title"),
-        "url": "https://music.youtube.com/watch?v=" + track.get("videoId"),
-        "artists": artists,
-        "duration": track.get("duration"),
-        "thumbnail": track.get("thumbnails")[0].get("url"),
-        "album": track.get("album").get("name") if track.get("album") is not None else "",
-        "isExplicit": track.get("isExplicit"),
-        "searchKey": track.get("title"),
-        "platform": "YOUTUBE",
-    }
-
-
 def generate_random_string(length: int) -> str:
     return ''.join((random.choice(string.ascii_lowercase)
                     for x in range(length)))

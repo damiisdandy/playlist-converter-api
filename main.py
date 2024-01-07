@@ -1,7 +1,7 @@
 from typing import List
-from utils.index import generate_random_string, get_playlist_duration, get_youtube_track_data,  track_duration_ms
+from utils.index import generate_random_string, get_playlist_duration, track_duration_ms
 from utils.url_parser import get_playlist_source
-from utils.parse_track import parse_spotify_track_data
+from utils.parse_track import parse_spotify_track_data, parse_youtube_track_data
 from models.index import GeneratePlaylist, GetPlaylist, Playlist, PlaylistSource, Track
 from ytmusicapi import YTMusic
 import spotipy as sp
@@ -40,6 +40,7 @@ app.add_middleware(
 )
 
 # TEST LINK: https://open.spotify.com/playlist/6Q85Qap1zdgxGMRSjMh2Pb?si=313b271be54943f0
+# https://music.youtube.com/playlist?list=PLWbEc5s7acQkmm0JiW28rGByzwiiG0iv2
 
 
 @app.get("/")
@@ -85,55 +86,38 @@ async def get_playlist(data: GetPlaylist) -> Playlist:
                 similarity=0,
             )
 
-    # if playlist_data.source == 'YOUTUBE':
-    #     try:
-    #         gotten_playlist = ytmusic.get_playlist(
-    #             playlist_data.playlist_id)
-    #         tracks = []
-    #         for track in gotten_playlist.get("tracks"):
-    #             tracks.append(get_youtube_track_data(track))
-    #         playlist = {
-    #             "id": gotten_playlist.get('id'),
-    #             "title":  gotten_playlist.get('title'),
-    #             "description":  gotten_playlist.get('description'),
-    #             "thumbnail": gotten_playlist.get('thumbnails')[0].get("url"),
-    #             "author":  gotten_playlist.get('author').get("name"),
-    #             "year":  gotten_playlist.get('year'),
-    #             "duration":  gotten_playlist.get('duration'),
-    #             "trackCount":  gotten_playlist.get('trackCount'),
-    #             "tracks": tracks,
-    #             "platform": "YOUTUBE",
-    #         }
-    #     except Exception as e:
-    #         raise HTTPException(
-    #             status_code=400, detail=f"problem getting playlist - {e}")
-    # elif playlist_data.source == 'SPOTIFY':
-    #     try:
-    #         gotten_playlist = spotify.playlist(playlist_data.playlist_id)
-    #         tracks = []
-    #         total_duration = 0
-    #         for tr in gotten_playlist.get("tracks").get("items"):
-    #             track = tr.get("track")
-    #             total_duration += track.get("duration_ms")
-    #             tracks.append(parse_spotify_track_data(track))
-    #             pass
+        case PlaylistSource.YOUTUBE:
+            youtube_playlist = ytmusic.get_playlist(
+                playlistId=playlist_info.playlist_id)
+            if youtube_playlist is None:
+                raise HTTPException(
+                    status_code=400, detail="youtube playlist does not exist")
 
-    #         playlist = {
-    #             "id": gotten_playlist.get('id'),
-    #             "title":  gotten_playlist.get('name'),
-    #             "description":  gotten_playlist.get('description'),
-    #             "thumbnail": gotten_playlist.get('images')[0].get("url"),
-    #             "author":  gotten_playlist.get('owner').get("display_name"),
-    #             "year":  "-",
-    #             "duration":  get_playlist_duration(total_duration),
-    #             "trackCount":  len(gotten_playlist.get("tracks").get("items")),
-    #             "tracks": tracks,
-    #             "platform": "SPOTIFY"
-    #         }
-    #     except Exception as e:
-    #         raise HTTPException(
-    #             status_code=400, detail=f"problem getting playlist - {e}")
-    return playlist
+            tracks = youtube_playlist.get("tracks")
+            parsed_tracks: List[Track] = []
+            if tracks:
+                for track in tracks:
+                    parsed_song = parse_youtube_track_data(track)
+                    parsed_tracks.append(parsed_song)
+
+            thumbnails = youtube_playlist.get("thumbnails") or [{"url": ""}]
+            author = youtube_playlist.get("author") or {"name": ""}
+
+            return Playlist(
+                id=youtube_playlist.get('id') or "",
+                title=youtube_playlist.get('title') or "",
+                description=youtube_playlist.get('description') or "",
+                thumbnail=thumbnails[0].get("url"),
+                author=author.get("name") or "",
+                duration=(youtube_playlist.get(
+                    'duration_seconds') or 0) * 1000,
+                track_count=youtube_playlist.get('trackCount') or 0,
+                tracks=parsed_tracks,
+                platform=PlaylistSource.YOUTUBE,
+                similarity=0,
+            )
+    raise HTTPException(
+        status_code=500, detail=f"Internal server error")
 
 
 @app.post("/generate-playlist", response_model=Playlist)
