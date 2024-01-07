@@ -1,26 +1,19 @@
 import random
 import string
-from difflib import SequenceMatcher
-from typing import List
-from operator import attrgetter
-
-from models.index import Track
+from typing import Optional
+from models.index import PlaylistInitInfo, PlaylistSource
+from urllib.parse import urlparse
 
 
-class PlaylistSource:
-    source: str
-    playlist_id: str
-
-    def __init__(self, source: str, playlist_id: str) -> None:
-        self.source = source
-        self.playlist_id = playlist_id
-
-
-def get_playlist_source(url: str) -> PlaylistSource:
-    if url.startswith('https://music.youtube.com'):
-        return PlaylistSource('YOUTUBE', url.split("=")[-1].strip())
-    elif url.startswith('https://open.spotify.com'):
-        return PlaylistSource('SPOTIFY', url.split('/')[-1].strip())
+def get_playlist_source(url: str) -> Optional[PlaylistInitInfo]:
+    domain = urlparse(url).netloc
+    print(urlparse.query)
+    if domain == 'music.youtube.com':
+        playlist_id = url.split("=")[-1].strip()
+        return PlaylistInitInfo(PlaylistSource.YOUTUBE, playlist_id=playlist_id)
+    elif domain == 'open.spotify.com':
+        playlist_id = url.split('/')[-1].strip()
+        return PlaylistInitInfo(PlaylistSource.SPOTIFY, playlist_id=playlist_id)
     else:
         return None
 
@@ -67,7 +60,7 @@ def track_duration_ms(duration: str) -> int:
     return (minutes * 60000) + (seconds * 1000)
 
 
-def get_spotify_track_data(track: dict) -> dict:
+def parse_spotify_track_data(track: dict) -> dict:
     artists = ""
     for artist in track.get("artists"):
         if track.get("artists")[-1].get("name") != artist.get("name"):
