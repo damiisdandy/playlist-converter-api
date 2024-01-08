@@ -120,8 +120,7 @@ I've calculated the time it takes for each request ranging from no-caching to fu
 
 From the looks of it the performance from no caching to fully cached gave us a performance increase of **5486.84%** (x55) ⚡. 
 
-> Disclaimer: this tests were run locally on a high-end system
+> Disclaimer: these tests were run locally on a high-end system
 
 ### Final Note
 I used this project to learn more about [Redis](https://redis.io/) and caching in general. There will always be room for improvement in the code. feel free to create a PR!
-
