@@ -124,4 +124,3 @@ From the looks of it the performance from no caching to fully cached gave us a p
 
 ### Final Note
 I used this project to learn more about [Redis](https://redis.io/) and caching in general. There will always be room for improvement in the code. feel free to create a PR!
-
