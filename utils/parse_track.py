@@ -17,21 +17,27 @@ def parse_spotify_track_data(track: dict) -> Track:
     album_name = ""
     album_image = DEFAULT_THUMBNAIL
     artist_list = track.get("artists")
+    first_artist = ""
 
     if artist_list is not None:
         artist_names_list = [artist.get("name") for artist in artist_list]
+        first_artist = artist_names_list[0]
         artists = ", ".join(artist_names_list)
 
     track_id = track.get("id") or ""
     album = track.get("album")
     if album is not None:
         album_name = album.get("name")
-        print(album.get("images")[0].get("url"))
         album_image = album.get("images")[0].get("url")
+
+    title = track.get("name") or ""
+
+    youtube_search_query = f'"{title}" by {first_artist}'
+    spotify_search_query = f"{title} artist:{first_artist} album:{album_name}"
 
     return Track(
         id=track_id,
-        title=track.get("name") or "",
+        title=title,
         url=f"https://open.spotify.com/track/{track_id}",
         artists=artists,
         duration=track.get("duration_ms") or 0,
@@ -39,6 +45,8 @@ def parse_spotify_track_data(track: dict) -> Track:
         album=album_name,
         is_explicit=track.get("explicit") or False,
         platform=PlaylistSource.SPOTIFY,
+        spotify_search_query=spotify_search_query,
+        youtube_search_query=youtube_search_query,
     )
 
 
@@ -54,6 +62,8 @@ def parse_youtube_track_data(track: dict) -> Track:
     artists = ""
     thumbnail = DEFAULT_THUMBNAIL
     artists_list = track.get("artists")
+    first_artist = artists_list[0].get(
+        "name") if artists_list is not None else ""
     if artists_list is not None:
         artist_names_list = [artist.get("name") for artist in artists_list]
         artists = ", ".join(artist_names_list)
@@ -67,9 +77,14 @@ def parse_youtube_track_data(track: dict) -> Track:
     if album is not None:
         album_name = album.get("name") or ""
 
+    title = track.get("title") or ""
+
+    spotify_search_query = f"{title} artist:{first_artist} album:{album_name}"
+    youtube_search_query = f'"{title}" by {first_artist}'
+
     return Track(
         id=track_id,
-        title=track.get("title") or "",
+        title=title,
         url=f"https://music.youtube.com/watch?v={track_id}",
         artists=artists,
         duration=(track.get("duration_seconds") or 0) * 1000,
@@ -77,4 +92,6 @@ def parse_youtube_track_data(track: dict) -> Track:
         album=album_name,
         is_explicit=track.get("isExplicit") or False,
         platform=PlaylistSource.YOUTUBE,
+        spotify_search_query=spotify_search_query,
+        youtube_search_query=youtube_search_query,
     )

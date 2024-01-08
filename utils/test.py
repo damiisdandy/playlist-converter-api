@@ -72,7 +72,7 @@ SPOTIFY_MOCK_TRACK = {
     "href": "https://api.spotify.com/v1/tracks/59tmfKVyQBGTTehRuPbgct",
     "id": "59tmfKVyQBGTTehRuPbgct",
     "is_local": False,
-    "name": "Who Is She x Supervillain (TikTok Edit) - Remix",
+    "name": "Who Is She",
     "popularity": 0,
     "preview_url": None,
     "track": True,
@@ -129,7 +129,7 @@ class TestObjectParser(unittest.TestCase):
         spotify_track = parse_spotify_track_data(SPOTIFY_MOCK_TRACK)
         self.assertEqual(spotify_track.id, "59tmfKVyQBGTTehRuPbgct")
         self.assertEqual(
-            spotify_track.title, "Who Is She x Supervillain (TikTok Edit) - Remix"
+            spotify_track.title, "Who Is She"
         )
         self.assertEqual(
             spotify_track.url, "https://open.spotify.com/track/59tmfKVyQBGTTehRuPbgct"
@@ -156,11 +156,12 @@ class TestObjectParser(unittest.TestCase):
         )
         self.assertEqual(youtube_track.artists, "Johnny Drille")
         self.assertEqual(youtube_track.duration, 154000)
-
         self.assertEqual(
             youtube_track.thumbnail,
             "https://lh3.googleusercontent.com/NKJvM9_ZkIxdorRF3beB45lizXT9XyoMqniqz8aS1Vxkjvirx5yd0E5QZB7n-1Ko6q87s8gDE9tq5hFxkw=w60-h60-l90-rj",
         )
         self.assertEqual(youtube_track.album, "Mystery Girl")
         self.assertEqual(youtube_track.is_explicit, False)
+        self.assertEqual(youtube_track.spotify_search_query,
+                         "Mystery Girl artist:Johnny Drille album:Mystery Girl")
         self.assertEqual(youtube_track.platform, PlaylistSource.YOUTUBE)

@@ -26,11 +26,13 @@ class Track(BaseModel):
     thumbnail: str
     album: str
     is_explicit: bool
+    spotify_search_query: str
+    youtube_search_query: str
     platform: PlaylistSource
 
 
 class Playlist(BaseModel):
-    id: str | int
+    id: str
     title: str
     description: str
     thumbnail: str
@@ -47,6 +49,5 @@ class GetPlaylist(BaseModel):
 
 
 class GeneratePlaylist(BaseModel):
-    thumbnail: str
     platform: PlaylistSource
-    playlist_redis_key: str
+    search_queries: List[str]

@@ -8,6 +8,7 @@ fastapi = {extras = ["all"], version = "*"}
 ytmusicapi = "*"
 spotipy = "*"
 redis = "*"
+python-slugify = "*"
 
 [dev-packages]
 autopep8 = "*"

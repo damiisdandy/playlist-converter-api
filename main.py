@@ -1,5 +1,4 @@
-from typing import List
-
+from typing import List, Optional
 from redis import Redis
 from utils.url_parser import get_playlist_source
 from utils.parse_track import parse_spotify_track_data, parse_youtube_track_data
@@ -45,9 +44,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# TEST LINK: https://open.spotify.com/playlist/6Q85Qap1zdgxGMRSjMh2Pb?si=313b271be54943f0
-# https://music.youtube.com/playlist?list=PLDInZaOOyBblfcPmlPBzfKH-tyDwUWOYJ
-
 
 @app.get("/")
 async def index():
@@ -55,9 +51,7 @@ async def index():
 
 
 @app.post("/get-playlist", response_model=Playlist)
-async def get_playlist(
-    data: GetPlaylist, cache: Redis = Depends(create_redis)
-) -> Playlist:
+async def get_playlist(data: GetPlaylist) -> Playlist:
     playlist_info = get_playlist_source(data.url)
     if playlist_info is None:
         raise HTTPException(status_code=400, detail="playlist url is invalid")
@@ -86,13 +80,6 @@ async def get_playlist(
                     parsed_song = parse_spotify_track_data(song)
                     duration += parsed_song.duration
                     parsed_tracks.append(parsed_song)
-                    song_exists = cache.exists(parsed_song.id)
-                    if not song_exists:
-                        cache.setex(
-                            name=parsed_song.id,
-                            time=SONG_CACHE_EXPIRY,
-                            value=parsed_song.model_dump_json(),
-                        )
 
             return Playlist(
                 id=spotify_playlist.get("id"),
@@ -123,17 +110,11 @@ async def get_playlist(
 
             tracks = youtube_playlist.get("tracks")
             parsed_tracks: List[Track] = []
+
             if tracks:
                 for track in tracks:
                     parsed_song = parse_youtube_track_data(track)
                     parsed_tracks.append(parsed_song)
-                    song_exists = cache.exists(parsed_song.id)
-                    if not song_exists:
-                        cache.setex(
-                            name=parsed_song.id,
-                            time=SONG_CACHE_EXPIRY,
-                            value=parsed_song.model_dump_json(),
-                        )
 
             thumbnails = youtube_playlist.get("thumbnails") or [{"url": ""}]
             author = youtube_playlist.get("author") or {"name": ""}
@@ -155,65 +136,87 @@ async def get_playlist(
 
 
 @app.post("/generate-playlist", response_model=Playlist)
-async def generate_playlist(data: GeneratePlaylist) -> Playlist:
+async def generate_playlist(data: GeneratePlaylist, cache: Redis = Depends(create_redis)) -> Playlist:
     platform = data.platform
-    redis_key = data.playlist_redis_key
 
-    # fetch array of tracks from redis
+    tracks: List[Track] = []
+    total_duration = 0
+    track_count = 0
 
-    # loop through tracks and search
+    match platform:
+        case PlaylistSource.SPOTIFY:
+            for query in data.search_queries:
+                track: Optional[Track] = None
 
-    # return new tracks and similarity score
+                cached_song = cache.get(query)
+                if cached_song is not None:
+                    track_json = json.loads(cached_song)  # type: ignore
+                    track = Track(**track_json)
+                else:
+                    search_result = spotify.search(
+                        query, type="track", limit=1)
+                    if search_result:
+                        related_tracks = search_result.get(
+                            "tracks").get("items")
+                        if len(related_tracks) > 0:
+                            found_track = related_tracks[0]
+                            track = parse_spotify_track_data(found_track)
+                            cache.setex(
+                                name=query,
+                                time=SONG_CACHE_EXPIRY,
+                                value=track.model_dump_json(),
+                            )
+                if track is not None:
+                    tracks.append(track)
+                    total_duration += track.duration
+                    track_count += 1
+            similarity = 0
 
-    return Playlist(
-        id="",
-        title="",
-        description="",
-        thumbnail="",
-        author="",
-        duration=0,
-        track_count=0,
-        tracks=[],
-        platform=PlaylistSource.YOUTUBE,
-        similarity=0,
-    )
-    # playlist = {}
-    # tracks = []
-    # total_duration = 0
-    # if data.platform == 'SPOTIFY':
-    #     for q_track in data.tracks:
-    #         artist = q_track.artists.split(",")[0].strip()
-    #         query = f"artist:{artist} {q_track.title}"
-    #         search_result = spotify.search(query)
-    #         related_tracks = search_result.get("tracks").get("items")
-    #         if len(related_tracks) > 0:
-    #             track = parse_spotify_track_data(
-    #                 search_result.get("tracks").get("items")[0])
-    #             total_duration += track_duration_ms(track.get("duration"))
-    #             tracks.append(track)
-    # elif data.platform == 'YOUTUBE':
-    #     for q_track in data.tracks:
-    #         artist = q_track.artists.split(",")[0].strip()
-    #         query = q_track.title + " " + artist
-    #         search_result = ytmusic.search(query, "songs", limit=1)
-    #         if len(search_result) > 0:
-    #             track = get_youtube_track_data(search_result[0])
-    #             total_duration += track_duration_ms(track.get("duration"))
-    #             tracks.append(track)
-    # else:
-    #     raise HTTPException(
-    #         status_code=400, detail=f"Invalid data source")
-    # playlist = {
-    #     "id": generate_random_string(10),
-    #     "title":  "NEW PLAYLIST",
-    #     "description":  "Playlist generated by Hoodini(damiisdandy)",
-    #     "thumbnail": data.thumbnail,
-    #     "author":  "You",
-    #     "year": str(datetime.now().date().strftime("%Y")),
-    #     "duration":  get_playlist_duration(total_duration),
-    #     "trackCount":  len(tracks),
-    #     "tracks": tracks,
-    #     "similarity": 0,
-    #     "platform": data.platform,
-    # }
-    # return playlist
+            return Playlist(
+                id="",
+                title="",
+                description="",
+                thumbnail="",
+                author="",
+                duration=total_duration,
+                track_count=track_count,
+                tracks=tracks,
+                platform=platform,
+                similarity=similarity,
+            )
+        case PlaylistSource.YOUTUBE:
+            for query in data.search_queries:
+                track: Optional[Track] = None
+
+                cached_song = cache.get(query)
+                if cached_song is not None:
+                    track_json = json.loads(cached_song)  # type: ignore
+                    track = Track(**track_json)
+                else:
+                    search_result = ytmusic.search(
+                        query, "songs", limit=1)
+                    if search_result:
+                        track = parse_youtube_track_data(search_result[0])
+                        cache.setex(
+                            name=query,
+                            time=SONG_CACHE_EXPIRY,
+                            value=track.model_dump_json(),
+                        )
+                if track is not None:
+                    tracks.append(track)
+                    total_duration += track.duration
+                    track_count += 1
+            similarity = 0
+
+            return Playlist(
+                id="",
+                title="",
+                description="",
+                thumbnail="",
+                author="",
+                duration=total_duration,
+                track_count=track_count,
+                tracks=tracks,
+                platform=platform,
+                similarity=similarity,
+            )
