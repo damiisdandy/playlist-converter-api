@@ -26,6 +26,7 @@ def parse_spotify_track_data(track: dict) -> Track:
     album = track.get("album")
     if album is not None:
         album_name = album.get("name")
+        print(album.get("images")[0].get("url"))
         album_image = album.get("images")[0].get("url")
 
     return Track(
@@ -37,7 +38,6 @@ def parse_spotify_track_data(track: dict) -> Track:
         thumbnail=album_image,
         album=album_name,
         is_explicit=track.get("explicit") or False,
-        search_key=track.get("name") or "",
         platform=PlaylistSource.SPOTIFY,
     )
 
@@ -76,6 +76,5 @@ def parse_youtube_track_data(track: dict) -> Track:
         thumbnail=thumbnail,
         album=album_name,
         is_explicit=track.get("isExplicit") or False,
-        search_key=track.get("title") or "",
         platform=PlaylistSource.YOUTUBE,
     )

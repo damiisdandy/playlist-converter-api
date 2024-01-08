@@ -26,7 +26,6 @@ class Track(BaseModel):
     thumbnail: str
     album: str
     is_explicit: bool
-    search_key: str
     platform: PlaylistSource
 
 
