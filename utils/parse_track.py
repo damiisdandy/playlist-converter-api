@@ -4,6 +4,14 @@ DEFAULT_THUMBNAIL = "https://placehold.co/640x640.png"
 
 
 def parse_spotify_track_data(track: dict) -> Track:
+    """Parse JSON respons from Spotify API into Track object
+
+    Args:
+        track (dict): JSON response from Spotify API
+
+    Returns:
+        Track: Track object
+    """
     artists = ""
     track_id = ""
     album_name = ""
@@ -35,6 +43,14 @@ def parse_spotify_track_data(track: dict) -> Track:
 
 
 def parse_youtube_track_data(track: dict) -> Track:
+    """Parse JSON respons from Youtube API into Track object
+
+    Args:
+        track (dict): JSON response from Youtube API
+
+    Returns:
+        Track: Track object
+    """
     artists = ""
     thumbnail = DEFAULT_THUMBNAIL
     artists_list = track.get("artists")

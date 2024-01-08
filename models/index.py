@@ -49,5 +49,5 @@ class GetPlaylist(BaseModel):
 
 class GeneratePlaylist(BaseModel):
     thumbnail: str
-    platform: str
-    tracks: List[Track]
+    platform: PlaylistSource
+    playlist_redis_key: str
