@@ -1,5 +1,4 @@
 import unittest
-from app.services import spotify
 from app.utils.parser import get_playlist_source, remove_feat_suffix
 from app.utils.parse_track import calculate_similarity, parse_spotify_track_data, parse_youtube_track_data
 from app.models.main import PlaylistSource, Track
