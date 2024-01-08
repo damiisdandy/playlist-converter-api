@@ -35,6 +35,7 @@ Unit tests are written with the python in-built `unittest`  package
 ```
 python -m unittest app/utils/test.py
 ```
+You can test the Spotify and Youtube Music Playlist URLs in `/tests.txt`
 
 ## Application Architecture
 ![Playlist Conversion API Application Architecture](/assets/application-flow.png)
@@ -103,3 +104,5 @@ To measure the similarity between each song converted, I simply compare the foll
 3. Artist
 4. Song Duration (should offset 2 secs max)
 A perfectly matched song would score 4/4 (100%)
+
+### Performace Reading
