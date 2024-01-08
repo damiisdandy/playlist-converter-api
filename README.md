@@ -4,11 +4,11 @@ This application simply converts playlists from youtube to spotify and vice-vers
 > Note: there is no form of authentication so playlists aren't created nor stored they are jsut display in the response.
 
 ## Usage
-You can read the api documentation [here](https://web-production-ade0.up.railway.app/docs)
+You can read the api documentation [here](https://api-playlist-converter.damiisdandy.com/docs)
 ### Get Playlist Info
 ```bash
   curl -X 'POST' \
-  'https://web-production-ade0.up.railway.app/get-playlist' \
+  'https://api-playlist-converter.damiisdandy.com/get-playlist' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -19,7 +19,7 @@ You can read the api documentation [here](https://web-production-ade0.up.railway
 ### Generate Playlist
 ```bash
   curl -X 'POST' \
-  'https://web-production-ade0.up.railway.app/generate-playlist' \
+  'https://api-playlist-converter.damiisdandy.com/generate-playlist' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
