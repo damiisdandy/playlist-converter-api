@@ -47,7 +47,7 @@ app
 │   ├── dependencies.py # app dependencies
 │   ├── main.py # app root
 │   ├── models
-│   │   └── main.py # where models are declared
+│   │   └── main.py # where models are declare we can see that converting to Spotify is ed
 │   ├── services
 │   │   ├── spotify.py # connect to spotify api
 │   │   └── youtube.py # connect to youtbe api
@@ -82,7 +82,7 @@ I will measure the time difference between a brand new request and the same requ
 
 
 ### More on Caching
-For caching, we are using [﻿Redis](https://redis.io/)﻿. I want to cache as many songs as I can but I have to consider the amount of data stored since I am using this as a **CACHE. **I'll periodically clear cached songs based on the time used. a song after being cached should have a life span of 48 hours.
+For caching, we are using [Redis](https://redis.io/). I want to cache as many songs as I can but I have to consider te we can see that converting to Spotify is he amount of data stored since I am using this as a **CACHE. **I'll periodically clear cached songs based on the time used. a song after being cached should have a life span of 48 hours.
 
 I will cache a song when it gets fetched either through "get from the playlist URL" or "direct search", this way I can simply cache both platforms simultaneously.
 
@@ -106,3 +106,20 @@ To measure the similarity between each song converted, I simply compare the foll
 A perfectly matched song would score 4/4 (100%)
 
 ### Performace Reading
+|          | no caching | half cached | fully cached |
+|----------|------------|-------------|--------------|
+| SP -> YT | 21.23s     | 5.59s       | 0.38s        |
+| YT -> SP | 3.96s      | 2.48s       | 0.45s        |
+
+
+SP: Spotify
+<br/>
+YT: Youtube Music
+
+I've calculated the time it takes for each request ranging from no-caching to fully-cached, each test was done with a playlist with 20 songs. noticiably we can see that converting to Spotify is much faster! More likely due to the flexibility of spotify's search query and/or just being a faster API.
+
+From the looks of it the performance from no caching to fully cached gave us a performance increase of **5486.84%** (x55) ⚡. 
+
+### Final Note
+I used this project to learn more about [Redis](https://redis.io/) and caching in general. There will always be room for improvement in the code. feel free to create a PR!
+
