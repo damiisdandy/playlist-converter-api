@@ -1,10 +1,11 @@
 import os
 import json
+from time import time
 
 
 from typing import List, Optional
 from redis import Redis
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -35,6 +36,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def print_process_time(request: Request, call_next):
+    """Middleware to print the time taken to process the request and return response
+
+    """
+    start_time = time()
+    response = await call_next(request)
+    print("Time took to process the request and return response is {} sec".format(
+        time() - start_time))
+    return response
 
 
 @app.get("/")
