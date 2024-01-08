@@ -57,6 +57,9 @@ async def index():
 
 @app.post("/get-playlist", response_model=Playlist)
 async def get_playlist(data: GetPlaylist) -> Playlist:
+    """Get playlist from url
+
+    """
     try:
         playlist = fetch_playlist_from_url(data.url)
 
@@ -71,6 +74,9 @@ async def get_playlist(data: GetPlaylist) -> Playlist:
 
 @app.post("/generate-playlist", response_model=Playlist)
 async def generate_playlist(data: GeneratePlaylist, cache: Redis = Depends(create_redis)) -> Playlist:
+    """Generate playlist from url (spotify -> youtube or youtube -> spotify)
+
+    """
     url = data.playlist_url
     platform = data.convert_to
 
