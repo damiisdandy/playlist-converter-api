@@ -1,5 +1,5 @@
 from typing import Optional
-from models.index import PlaylistInitInfo, PlaylistSource
+from app.models.index import PlaylistInitInfo, PlaylistSource
 from urllib.parse import urlparse
 
 

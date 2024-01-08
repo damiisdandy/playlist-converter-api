@@ -1,15 +1,15 @@
 from typing import List, Optional
 from redis import Redis
-from utils.url_parser import get_playlist_source
-from utils.parse_track import parse_spotify_track_data, parse_youtube_track_data
-from models.index import GeneratePlaylist, GetPlaylist, Playlist, PlaylistSource, Track
+from app.utils.url_parser import get_playlist_source
+from app.utils.parse_track import parse_spotify_track_data, parse_youtube_track_data
+from app.models.index import GeneratePlaylist, GetPlaylist, Playlist, PlaylistSource, Track
 from ytmusicapi import YTMusic
 import spotipy as sp
 from spotipy.oauth2 import SpotifyClientCredentials
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from config.db import create_redis
+from app.config.db import create_redis
 import os
 import json
 

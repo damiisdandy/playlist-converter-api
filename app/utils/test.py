@@ -1,7 +1,7 @@
 import unittest
-from utils.url_parser import get_playlist_source
-from utils.parse_track import parse_spotify_track_data, parse_youtube_track_data
-from models.index import PlaylistSource
+from app.utils.url_parser import get_playlist_source
+from app.utils.parse_track import parse_spotify_track_data, parse_youtube_track_data
+from app.models.index import PlaylistSource
 
 SPOTIFY_MOCK_TRACK = {
     "album": {
