@@ -1,3 +1,4 @@
+import os
 import redis
 from typing import List
 from app.constants import SONG_CACHE_EXPIRY
@@ -36,8 +37,7 @@ def create_redis() -> redis.Redis:
     Returns:
         _type_: Redis
     """
-    pool = redis.ConnectionPool(
-        host='localhost', port=6379, db=0, username=None, password=None)
+    pool = redis.ConnectionPool.from_url(os.getenv("REDIS_URL"))
     return redis.Redis(connection_pool=pool)
 
 
