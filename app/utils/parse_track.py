@@ -1,4 +1,4 @@
-from app.models.index import PlaylistSource, Track
+from app.models.main import PlaylistSource, Track
 
 DEFAULT_THUMBNAIL = "https://placehold.co/640x640.png"
 

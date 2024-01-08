@@ -49,5 +49,5 @@ class GetPlaylist(BaseModel):
 
 
 class GeneratePlaylist(BaseModel):
-    platform: PlaylistSource
-    search_queries: List[str]
+    playlist_url: str
+    convert_to: PlaylistSource
