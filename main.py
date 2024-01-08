@@ -1,17 +1,21 @@
 from typing import List
-from utils.index import generate_random_string, get_playlist_duration, track_duration_ms
+
+from redis import Redis
 from utils.url_parser import get_playlist_source
 from utils.parse_track import parse_spotify_track_data, parse_youtube_track_data
 from models.index import GeneratePlaylist, GetPlaylist, Playlist, PlaylistSource, Track
 from ytmusicapi import YTMusic
 import spotipy as sp
 from spotipy.oauth2 import SpotifyClientCredentials
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import os
 from dotenv import load_dotenv
-from datetime import datetime
+from config.db import create_redis
+import os
+import json
 
+
+SONG_CACHE_EXPIRY = 24 * 60 * 60  # 24 hours in seconds (TTL)
 
 load_dotenv()
 
@@ -40,7 +44,7 @@ app.add_middleware(
 )
 
 # TEST LINK: https://open.spotify.com/playlist/6Q85Qap1zdgxGMRSjMh2Pb?si=313b271be54943f0
-# https://music.youtube.com/playlist?list=PLWbEc5s7acQkmm0JiW28rGByzwiiG0iv2
+# https://music.youtube.com/playlist?list=PLDInZaOOyBblfcPmlPBzfKH-tyDwUWOYJ
 
 
 @app.get("/")
@@ -49,19 +53,22 @@ async def index():
 
 
 @app.post("/get-playlist", response_model=Playlist)
-async def get_playlist(data: GetPlaylist) -> Playlist:
-    playlist = {}
+async def get_playlist(data: GetPlaylist, cache: Redis = Depends(create_redis)) -> Playlist:
     playlist_info = get_playlist_source(data.url)
     if playlist_info is None:
         raise HTTPException(status_code=400, detail="playlist url is invalid")
 
     match playlist_info.source:
         case PlaylistSource.SPOTIFY:
-            spotify_playlist = spotify.playlist(
-                playlist_id=playlist_info.playlist_id)
+            try:
+                spotify_playlist = spotify.playlist(
+                    playlist_id=playlist_info.playlist_id)
+            except sp.exceptions.SpotifyException:
+                raise HTTPException(
+                    status_code=404, detail="spotify playlist does not exist")
             if spotify_playlist is None:
                 raise HTTPException(
-                    status_code=400, detail="spotify playlist does not exist")
+                    status_code=400, detail="problem fetching spotify playlist")
             tracks = spotify_playlist.get("tracks").get("items")
             parsed_tracks: List[Track] = []
             duration = 0
@@ -72,6 +79,11 @@ async def get_playlist(data: GetPlaylist) -> Playlist:
                     parsed_song = parse_spotify_track_data(song)
                     duration += parsed_song.duration
                     parsed_tracks.append(parsed_song)
+                    song_exists = cache.exists(parsed_song.id)
+                    if not song_exists:
+                        cache.setex(name=parsed_song.id,
+                                    time=SONG_CACHE_EXPIRY,
+                                    value=parsed_song.model_dump_json())
 
             return Playlist(
                 id=spotify_playlist.get('id'),
@@ -87,11 +99,15 @@ async def get_playlist(data: GetPlaylist) -> Playlist:
             )
 
         case PlaylistSource.YOUTUBE:
-            youtube_playlist = ytmusic.get_playlist(
-                playlistId=playlist_info.playlist_id)
+            try:
+                youtube_playlist = ytmusic.get_playlist(
+                    playlistId=playlist_info.playlist_id)
+            except Exception:
+                raise HTTPException(
+                    status_code=404, detail="youtube playlist does not exist")
             if youtube_playlist is None:
                 raise HTTPException(
-                    status_code=400, detail="youtube playlist does not exist")
+                    status_code=400, detail="problem fetching youtube playlist")
 
             tracks = youtube_playlist.get("tracks")
             parsed_tracks: List[Track] = []
@@ -99,6 +115,11 @@ async def get_playlist(data: GetPlaylist) -> Playlist:
                 for track in tracks:
                     parsed_song = parse_youtube_track_data(track)
                     parsed_tracks.append(parsed_song)
+                    song_exists = cache.exists(parsed_song.id)
+                    if not song_exists:
+                        cache.setex(name=parsed_song.id,
+                                    time=SONG_CACHE_EXPIRY,
+                                    value=parsed_song.model_dump_json())
 
             thumbnails = youtube_playlist.get("thumbnails") or [{"url": ""}]
             author = youtube_playlist.get("author") or {"name": ""}
@@ -117,7 +138,7 @@ async def get_playlist(data: GetPlaylist) -> Playlist:
                 similarity=0,
             )
     raise HTTPException(
-        status_code=500, detail=f"Internal server error")
+        status_code=500, detail="Internal server error")
 
 
 @app.post("/generate-playlist", response_model=Playlist)
