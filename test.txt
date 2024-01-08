@@ -1,2 +1,7 @@
-YOUTUBE_TEST_URL=https://music.youtube.com/playlist?list=PLDInZaOOyBblfcPmlPBzfKH-tyDwUWOYJ
-SPOTIFY_TEST_URL=https://open.spotify.com/playlist/2V3yMxk0NC66iA3p2aM38R 
+Spotify Playlists:
+https://open.spotify.com/playlist/0YdOm9Gy8ECiPv6G2d8pih?si=3c9e483dd0ee4106 (Full)
+https://open.spotify.com/playlist/5hLmLZwVKnXqlWOWid2Dg0?si=ad66282ec3224298 (Half)
+
+Youtube Playlist:
+https://music.youtube.com/playlist?list=PL1-FO84midwZeWUUwK9LmonTwLmQ3B--v&si=hTq8mkWmmoqgw22H (Full)
+https://music.youtube.com/playlist?list=PL1-FO84midwYhd_WaA-Nl8Arve2-YxVYN&si=cyJNZQ1Aec25axDZ (Half)
