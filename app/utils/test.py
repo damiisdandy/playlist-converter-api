@@ -1,7 +1,8 @@
 import unittest
-from app.utils.url_parser import get_playlist_source
-from app.utils.parse_track import parse_spotify_track_data, parse_youtube_track_data
-from app.models.main import PlaylistSource
+from app.services import spotify
+from app.utils.parser import get_playlist_source, remove_feat_suffix
+from app.utils.parse_track import calculate_similarity, parse_spotify_track_data, parse_youtube_track_data
+from app.models.main import PlaylistSource, Track
 
 SPOTIFY_MOCK_TRACK = {
     "album": {
@@ -118,10 +119,20 @@ class TestUtilities(unittest.TestCase):
             self.assertEqual(playlist_info.source, PlaylistSource.SPOTIFY)
             self.assertEqual(playlist_info.playlist_id, "playlist_id")
 
-    def test_invalid_url(self):
+    def test_youtube_url(self):
         url = "https://google.com/playlist/playlist_id"
         playlist_info = get_playlist_source(url)
         self.assertIsNone(playlist_info)
+
+    def test_remove_feat_suffix(self):
+        self.assertEqual(remove_feat_suffix(
+            "Who Is She (feat. Xanemusic)"), "Who Is She")
+        self.assertEqual(remove_feat_suffix(
+            "Who Is She feat. Xanemusic"), "Who Is She")
+        self.assertEqual(remove_feat_suffix(
+            "Feature of here beauty"), "Feature of here beauty")
+        self.assertEqual(remove_feat_suffix(
+            "Feature of here beauty feat. dami"), "Feature of here beauty")
 
 
 class TestObjectParser(unittest.TestCase):
@@ -165,3 +176,72 @@ class TestObjectParser(unittest.TestCase):
         self.assertEqual(youtube_track.spotify_search_query,
                          "Mystery Girl artist:Johnny Drille album:Mystery Girl")
         self.assertEqual(youtube_track.platform, PlaylistSource.YOUTUBE)
+
+    def test_compare_similariy(self):
+        # perfect similarity
+        youtube_track = Track(
+            id="fNkOjIK--Jg",
+            url="",
+            title="Let me Know",
+            album="Big Boy Talk",
+            artists="girl, boy",
+            duration=140000,
+            thumbnail="",
+            is_explicit=False,
+            spotify_search_query="",
+            youtube_search_query="",
+            platform=PlaylistSource.YOUTUBE,
+        )
+        spotify_track = Track(
+            id="59tmfKVyQBGTTehRuPbgct",
+            url="",
+            title="Let me know",
+            album="Big Boy Talk",
+            artists="boy, girl",
+            duration=140000,
+            thumbnail="",
+            is_explicit=False,
+            spotify_search_query="",
+            youtube_search_query="",
+            platform=PlaylistSource.SPOTIFY,
+        )
+        self.assertEqual(calculate_similarity(
+            youtube_track, spotify_track), 4.0)
+
+        # half similarity
+        youtube_track = Track(
+            id="fNkOjIK--Jg",
+            url="",
+            title="Let me Know",
+            album="Big Boy Talk",
+            artists="boy, girl",
+            duration=140000,
+            thumbnail="",
+            is_explicit=False,
+            spotify_search_query="",
+            youtube_search_query="",
+            platform=PlaylistSource.YOUTUBE,
+        )
+        spotify_track = Track(
+            id="59tmfKVyQBGTTehRuPbgct",
+            url="",
+            title="Let me know",
+            album="Big Girl",
+            artists="boy, girl2",
+            duration=142000,
+            thumbnail="",
+            is_explicit=False,
+            spotify_search_query="",
+            youtube_search_query="",
+            platform=PlaylistSource.SPOTIFY,
+        )
+        self.assertEqual(calculate_similarity(
+            youtube_track, spotify_track), 2.5)
+
+        # no similarity
+        youtube_track = parse_youtube_track_data(YOUTUBE_MOCK_TRACK)
+        spotify_track = parse_spotify_track_data(SPOTIFY_MOCK_TRACK)
+
+        self.assertEqual(calculate_similarity(
+            youtube_track, spotify_track), 0.5)
+        pass

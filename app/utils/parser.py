@@ -1,6 +1,7 @@
 from typing import Optional
 from app.models.main import PlaylistInitInfo, PlaylistSource
 from urllib.parse import urlparse
+import re
 
 
 def get_playlist_source(url: str) -> Optional[PlaylistInitInfo]:
@@ -15,3 +16,12 @@ def get_playlist_source(url: str) -> Optional[PlaylistInitInfo]:
         return PlaylistInitInfo(PlaylistSource.SPOTIFY, playlist_id=playlist_id)
     else:
         return None
+
+
+def remove_feat_suffix(text):
+    # Remove characters after "feat"
+    text = re.sub(r'\sfeat\..*$', '', text, flags=re.IGNORECASE)
+    # Remove characters after "(feat"
+    text = re.sub(r'\(feat\..*$', '', text, flags=re.IGNORECASE)
+
+    return text.strip()

@@ -1,6 +1,8 @@
+from app.constants import DEFAULT_THUMBNAIL
 from app.models.main import PlaylistSource, Track
+import re
 
-DEFAULT_THUMBNAIL = "https://placehold.co/640x640.png"
+from app.utils.parser import remove_feat_suffix
 
 
 def parse_spotify_track_data(track: dict) -> Track:
@@ -95,3 +97,47 @@ def parse_youtube_track_data(track: dict) -> Track:
         spotify_search_query=spotify_search_query,
         youtube_search_query=youtube_search_query,
     )
+
+
+def calculate_similarity(track1: Track, track2: Track) -> float:
+    """Calculate similarity between two tracks
+
+    Args:
+        track1 (Track): First track
+        track2 (Track): Second track
+
+    Returns:
+        float: Similarity score
+    """
+    similarity = 0
+
+    # if has same title
+    if remove_feat_suffix(track1.title).casefold().strip() == remove_feat_suffix(track2.title).casefold().strip():
+        similarity += 1
+
+    # if has same main artist
+    track1_artists = track1.artists.strip().split(", ")
+    track2_artists = track2.artists.strip().split(", ")
+
+    similarity_by_deep_eq = True
+
+    more_artists = track1_artists if len(track1_artists) > len(
+        track2_artists) else track2_artists
+    less_artists = track1_artists if len(track1_artists) < len(
+        track2_artists) else track2_artists
+    for artist in less_artists:
+        if artist not in more_artists:
+            similarity_by_deep_eq = False
+    if len(track1.artists) == len(track2.artists):
+        similarity += 0.5
+    if similarity_by_deep_eq:
+        similarity += 0.5
+
+    # if album name is the same
+    if track1.album.casefold().strip() == track2.album.casefold().strip():
+        similarity += 1
+
+    # if duration is within 3 seconds of each other
+    if abs(track1.duration - track2.duration) <= 2000:
+        similarity += 1
+    return similarity

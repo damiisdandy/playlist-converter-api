@@ -3,7 +3,7 @@ from typing import List
 from app.constants import SONG_CACHE_EXPIRY
 from app.utils.parse_track import parse_spotify_track_data, parse_youtube_track_data
 
-from app.utils.url_parser import get_playlist_source
+from app.utils.parser import get_playlist_source
 from app.services.spotify import spotify, SpotifyException
 from app.services.youtube import ytmusic
 from app.models.main import Playlist, PlaylistSource, Track
