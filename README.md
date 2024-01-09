@@ -107,7 +107,7 @@ I will measure the time difference between a brand new request and the same requ
 
 
 ### More on Caching
-For caching, we are using [Redis](https://redis.io/). I want to cache as many songs as I can but I have to consider te we can see that converting to Spotify is he amount of data stored since I am using this as a **CACHE. **I'll periodically clear cached songs based on the time used. a song after being cached should have a life span of 48 hours.
+For caching, we are using [Redis](https://redis.io/). I want to cache as many songs as I can but I have to consider te we can see that converting to Spotify is he amount of data stored since I am using this as a **CACHE.** I'll periodically clear cached songs based on the time used. a song after being cached should have a life span of 48 hours.
 
 I will cache a song when it gets fetched either through "get from the playlist URL" or "direct search", this way I can simply cache both platforms simultaneously.
 
@@ -117,7 +117,7 @@ because not all songs on platform A are on platform B and their information migh
 I have to include more information in the search in other to narrow down the songs. e.g. Including the artist's name, album, song duration, etc.
 
 ### Why I chose to cache the songs only
-I cache songs, not playlists mainly because not every playlist is the same, but you can see the same song on multiple playlists. you might think well why not just cache it for the `/get-playlist`  request, it will make hitting the request again a lot quicker. Yes! **but **the issue comes from its unique identifier, if we simply use the playlist's `id` , then when the playlist is updated we won't send the updated version, so cache TTL (time to live) would need to be short (< 1min) I guess this is only good for someone who tries spamming. A way to solve this is to concatenate the `id` and `duration` but remember that we only get the playlist `id` from its URL and no other important information. 
+I cache songs, not playlists mainly because not every playlist is the same, but you can see the same song on multiple playlists. you might think well why not just cache it for the `/get-playlist`  request, it will make hitting the request again a lot quicker. Yes! **but** the issue comes from its unique identifier, if we simply use the playlist's `id` , then when the playlist is updated we won't send the updated version, so cache TTL (time to live) would need to be short (< 1min) I guess this is only good for someone who tries spamming. A way to solve this is to concatenate the `id` and `duration` but remember that we only get the playlist `id` from its URL and no other important information. 
 
 ### How do I measure quality/similarities?
 To measure the similarity between each song converted, I simply compare the following properties:
