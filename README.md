@@ -1,4 +1,4 @@
-# Playlist Converter API v1 🎛️
+# Playlist Hopper v1 🎛️
 This application simply converts playlists from youtube to spotify and vice-versa.
 
 > Note: there is no form of authentication so playlists aren't created nor stored they are jsut display in the response.
