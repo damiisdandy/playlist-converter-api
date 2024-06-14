@@ -10,7 +10,6 @@ RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
 COPY ./app /app/app
 
-HEALTHCHECK  --interval=5m --timeout=3s \
-  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+HEALTHCHECK CMD curl --fail http://localhost:3000 || exit 1 
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000"]
